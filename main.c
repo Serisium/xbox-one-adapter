@@ -21,6 +21,21 @@ typedef enum {
 int state = 0;
 int count = 0;
 
+void spi_transmit(uint8_t data) {
+    SET_BIT(SPCR, MSTR);
+    SPDR = data;
+
+    while(!GET_BIT(SPSR, SPIF));
+}
+
+void analog_write(uint8_t channel, uint8_t data) {
+    CLEAR_BIT(PORTB, PB2);
+    spi_transmit(0x0f & channel);
+    spi_transmit(data);
+    SET_BIT(PORTB, PB2);
+}
+
+
 int main(void)
 {
     wdt_enable(WDTO_1S);    // enable 1s watchdog timer
@@ -41,9 +56,23 @@ int main(void)
     // Set PORTC as output
     DDRC = 0xFF;
 
+    // Set up SPI for analog outputs, ch 19.5 in datasheet
+    // Enable latch, MOSI, and SCK as outputs
+    SET_BIT(DDRB, PB2);
+    SET_BIT(DDRB, PB3);
+    SET_BIT(DDRB, PB5);
+    // Set latch as idle-high
+    SET_BIT(PORTB, PB2);
+    // Enable SPI in Master mode, with a rate of F_CPU/64
+    SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR1);
+
+    uint8_t analog = 0;
 
     while(1) {
         wdt_reset();
+
+        analog++;
+        analog_write(8, analog);
 
         if(state == Move_left) {
             DDRC = 0b00000001;
@@ -54,6 +83,7 @@ int main(void)
             PORTC = 0b11111101;
             state = 0;
         }
+        _delay_us(500);
     }
 }
 
@@ -76,10 +106,10 @@ ISR(INT0_vect) {
         _delay_us(20);
         CLEAR_BIT(PORTD, PD3);
         count++;
-        if(count >= LEFT_WAIT & state == Idle_left) {
+        if((count >= LEFT_WAIT) & (state == Idle_left)) {
             state = Move_left;
             count = 0;
-        } else if(count >= RIGHT_WAIT & state == Idle_right) {
+        } else if((count >= RIGHT_WAIT) & (state == Idle_right)) {
             state = Move_right;
             count = 0;
         }
