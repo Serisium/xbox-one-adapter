@@ -5,6 +5,7 @@
 
 #include "pins.h"
 #include "controller.h"
+#include "spi.h"
 
 #define LEFT_WAIT   4
 #define RIGHT_WAIT  4
@@ -18,20 +19,6 @@ typedef enum {
 
 int state = 0;
 int count = 0;
-
-void spi_transmit(uint8_t data) {
-    SET_BIT(SPCR, MSTR);
-    SPDR = data;
-
-    while(!GET_BIT(SPSR, SPIF));
-}
-
-void analog_write(uint8_t channel, uint8_t data) {
-    CLEAR_BIT(PORTB, PB2);
-    spi_transmit(0x0f & channel);
-    spi_transmit(data);
-    SET_BIT(PORTB, PB2);
-}
 
 int main(void)
 {

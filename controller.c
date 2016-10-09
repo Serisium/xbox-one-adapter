@@ -52,6 +52,9 @@
         )
 
 uint8_t gc_poll(uint8_t *controller_buffer) {
+    controller_buffer[0] = 0b10101010;
+    controller_buffer[1] = 0b01010101;
+
     SET_BIT(PORT_GC, P_GC);
     SET_BIT(DDR_GC, P_GC);          // Set PIN_GC as output
 
@@ -59,7 +62,6 @@ uint8_t gc_poll(uint8_t *controller_buffer) {
     uint8_t i, n;
 
 	// Send the initial poll message:
-    //
 	//     0100 0000 0000 0011 0000 0010 1
     send_zeroes(1, i, n);
     send_ones(1, i, n);
@@ -73,76 +75,52 @@ uint8_t gc_poll(uint8_t *controller_buffer) {
     SET_BIT(PORT_GC, P_GC);
     CLEAR_BIT(DDR_GC, P_GC);        // Set PIN_GC as input
 
-    return 1;
+    //SET_BIT(PORT_DEBUG, P_DEBUG);
 
-    /*
+    // '0' bits usually take 9-10 loops
+    // '1' bits usually take 3-4 loops
     asm volatile(
-            "sbic %[port], %[bit] \n\t"
-            "sbi %[port], %[bit2] \n\t"
-            //"rjmp 1b \n\t"
-            //"0:dec %[i] \n\t"
-            //"brne 0b \n\t"
-            //"1: nop \n\t"
-            ::
-            [port]      "I" (_SFR_IO_ADDR(PORTD)),
-            [bit]       "I" (PA6),
-            [bit2]       "I" (PA2),
-            [i]         "r" (i)
+            //"ld %[i], %a[buff]+ \n\t"
+            "ldi __tmp_reg__, 0 \n\t"
+            "ldi %[i], 5 \n\t"
+            "rjmp low \n\t"
+            "loop: ldi %[i], 0xFF \n\t"         // Initialize timeout register
+            "high: \n\t"   // Wait for the signal to go low
+                "dec %[i] \n\t"                 // Decrement the timeout register
+                "sbic %[pin_gc], %[bit_gc] \n\t"// Skip out if the signal goes low(bit is being transmitted)
+                "brne high \n\t"                // Loop back to 0
+            "breq error \n\t"                   // If we timed out instead of going low, quit
+            "ldi %[i], %[threshold] \n\t"
+            "low: \n\t"   // Main bit-testing loop. Takes 4n-1 clock cycles
+                "dec %[i] \n\t"                 // 1c;      Decrement the timekeeping register
+                "sbis %[pin_gc], %[bit_gc] \n\t"// 1/2c;    Break out once the signal goes low
+                "brne low \n\t"                 // 2/1c;    Loop backwards unless we've timed out
+            "breq zero \n\t"
+            "one:  \n\t"
+                "sbi %[port_debug], %[bit_debug] \n\t"
+                "cbi %[port_debug], %[bit_debug] \n\t"
+            "zero:  \n\t"
+            "0: \n\t"   // Wait for the signal to go low
+                "sbis %[pin_gc], %[bit_gc] \n\t"  // Skip out if the signal goes low(bit is being transmitted)
+                "brne 0b \n\t"            // Loop back to 0
+            "rjmp loop \n\t"
+            "error: ldi %[i], 0b10101010 \n\t"
+            :
+            [i]                 "=a" (i),
+            [n]                 "=a" (n)
+            :
+            [port_debug]        "I" (_SFR_IO_ADDR(PORT_DEBUG)),
+            [bit_debug]         "I" (P_DEBUG),
+            [port_gc]           "I" (_SFR_IO_ADDR(PORT_GC)),
+            [pin_gc]            "I" (_SFR_IO_ADDR(PIN_GC)),
+            [bit_gc]            "I" (P_GC),
+            [buff]              "e" (controller_buffer),
+            [threshold]         "M" (7)
         );
-    */
 
-    /*
-    // Start reading the message
-    enable_usi();
-    enable_timer0();
-    while(1) {
-        // Wait for signal to go low
-        while(GET_BIT(PINA, PIN_GC)) {
-            // Catch a timer overflow as an exit condition
-            // This occurs if the signal is high for > 255 cycles
-            if(GET_BIT(TIFR0, TOV0)) {
-                // Exit condition
-                disable_usi();
+    //CLEAR_BIT(PORT_DEBUG, P_DEBUG);
 
-                // Wait for the timer to overflow and loop once, fixes 'every other' corruption
-                while(TCNT0 < 24) {}
+    spi_transmit(i);
 
-                // Check if there's no signal on the line
-                if(cur_byte == 0) {
-                    SET_BIT(PORTA, PIN_DEBUG);
-                    CLEAR_BIT(PORTA, PIN_DEBUG);
-                    return 0;
-                }
-
-                disable_timer0();
-                return 1;
-            }
-        }
-        // Reset Timer0, a little higher than 0 to account for polling delay
-        TCNT0 = 5;
-
-        // Check if a byte has passed
-        if(GET_BIT(USISR, USIOIF)) {
-            // Skip the counter to 8 of 16
-            SET_BIT(USISR, USICNT3);    
-
-            // Store the byte from the serial buffer
-            controller_buffer[cur_byte] = USIBR;
-            cur_byte++;
-
-            // Toggle the debug pin
-            //TOGGLE_BIT(PORTA, PIN_DEBUG);
-
-            // Clear the overflow counter
-            SET_BIT(USISR, USIOIF);
-        }
-
-        // Make sure signal is high before looping
-        // Hardware should pull up DIN or risk an infinite loop
-        while(!GET_BIT(PINA, PIN_GC)) {}
-    }
-    */
-
-    // Unreachable code
-    return 0;
+    return 1;
 }

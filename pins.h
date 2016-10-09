@@ -1,3 +1,6 @@
+#ifndef _PINS_H
+#define _PINS_H
+
 #include <avr/io.h>
 
 #define GET_BIT(TGT, PIN)    ((TGT) & (1 << (PIN))) 
@@ -14,3 +17,5 @@
 #define PIN_GC      PIND
 #define DDR_GC      DDRD
 #define P_GC        PD4
+
+#endif

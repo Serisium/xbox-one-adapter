@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "pins.h"
+#include "spi.h"
 
 #define DEADZONE_L 80
 #define DEADZONE_R 80
