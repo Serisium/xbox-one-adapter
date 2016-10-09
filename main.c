@@ -1,12 +1,10 @@
-#include <avr/io.h>
+#include <stdint.h>
 #include <avr/wdt.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
-#define GET_BIT(TGT, PIN)    ((TGT) & (1 << (PIN))) 
-#define SET_BIT(TGT, PIN)    do { TGT |=  (1 << (PIN)); } while(0)
-#define CLEAR_BIT(TGT, PIN)  do { TGT &= ~(1 << (PIN)); } while(0)
-#define TOGGLE_BIT(TGT, PIN) do { TGT ^=  (1 << (PIN)); } while(0)
+#include "pins.h"
+#include "controller.h"
 
 #define LEFT_WAIT   4
 #define RIGHT_WAIT  4
@@ -35,7 +33,6 @@ void analog_write(uint8_t channel, uint8_t data) {
     SET_BIT(PORTB, PB2);
 }
 
-
 int main(void)
 {
     wdt_enable(WDTO_1S);    // enable 1s watchdog timer
@@ -45,10 +42,11 @@ int main(void)
     EIMSK = (1 << INT0);                    // Enable INT0
 
     // Enable interrupts
-    sei();
+    //sei();
+    cli();
 
-    // Set PD3 as debug output line
-    SET_BIT(DDRD, PD3);
+    // Set P_DEBUG as debug output line
+    SET_BIT(DDR_DEBUG, P_DEBUG);
 
     // Set PORTC high
     PORTC = 0xFF;
@@ -68,9 +66,19 @@ int main(void)
 
     uint8_t analog = 0;
 
+    uint8_t controller_buffer[8] = {0};
+    Controller *controller = (Controller*)controller_buffer;
+
     while(1) {
         wdt_reset();
 
+        for(uint8_t i = 0; i < 8; ++i) {
+            controller_buffer[i] = 0x00;
+        }
+
+		gc_poll(controller_buffer);
+
+        /*
         analog++;
         analog_write(8, analog);
 
@@ -83,6 +91,7 @@ int main(void)
             PORTC = 0b11111101;
             state = 0;
         }
+        */
         _delay_us(500);
     }
 }
@@ -102,9 +111,9 @@ ISR(INT0_vect) {
     // If so, this is a data transfer. If not, it was just a sync pulse
     if(GET_BIT(EIFR, INTF0)) {
         // Toggle the debug line
-        SET_BIT(PORTD, PD3);
+        SET_BIT(PORT_DEBUG, P_DEBUG);
         _delay_us(20);
-        CLEAR_BIT(PORTD, PD3);
+        CLEAR_BIT(PORT_DEBUG, P_DEBUG);
         count++;
         if((count >= LEFT_WAIT) & (state == Idle_left)) {
             state = Move_left;
