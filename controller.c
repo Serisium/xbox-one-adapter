@@ -114,7 +114,7 @@ uint8_t gc_poll(uint8_t *controller_buffer) {
                 "ldi %[n], 0b10000000 \n\t"             // Reinitialize the current bit
                 "mov __tmp_reg__, __zero_reg__ \n\t"    // Zero out the byte buffer
                 "inc %[k] \n\t"
-                //"cpi %[k], %[buffer_size] \n\t"
+                "cpi %[k], %[buffer_size] \n\t"
                 "breq end \n\t"
             "low: \n\t"   // Wait for the signal to go low
                 "sbis %[pin_gc], %[bit_gc] \n\t"  // Skip out if the signal goes low(bit is still being transmitted)
@@ -133,7 +133,7 @@ uint8_t gc_poll(uint8_t *controller_buffer) {
             [pin_gc]            "I" (_SFR_IO_ADDR(PIN_GC)),
             [bit_gc]            "I" (P_GC),
             [threshold]         "M" (7),
-            [buffer_size]       "M" (7)
+            [buffer_size]       "M" (8)
         );
 
     //spi_transmit(controller_buffer[7]);
