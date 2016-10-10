@@ -60,7 +60,7 @@ uint8_t gc_poll(uint8_t *controller_buffer) {
     SET_BIT(DDR_GC, P_GC);          // Set PIN_GC as output
 
     // Temporary variables for assembly functions
-    uint8_t i, n;
+    uint8_t i, n, k;
 
 	// Send the initial poll message:
 	//     0100 0000 0000 0011 0000 0010 1
@@ -76,16 +76,16 @@ uint8_t gc_poll(uint8_t *controller_buffer) {
     SET_BIT(PORT_GC, P_GC);
     CLEAR_BIT(DDR_GC, P_GC);        // Set PIN_GC as input
 
-    //SET_BIT(PORT_DEBUG, P_DEBUG);
-
     // '0' bits usually take 9-10 loops
     // '1' bits usually take 3-4 loops
     // i holds the timekeeping/timeout value
     // n holds the current bit being written(0b00000001 -> 0b00000010, etc)
     // __tmp_reg__ holds the current byte, before being written to the buffer
+    // k holds the number of bytes we've written, to avoid overrunning the controller_buffer
     asm volatile(
             //"ld %[i], %a[buff]+ \n\t"
             "mov __tmp_reg__, __zero_reg__ \n\t"
+            "mov %[k], __zero_reg__ \n\t"
             "ldi %[n], 0b10000000 \n\t"
             "ldi %[i], 3 \n\t"
             "rjmp signal \n\t"
@@ -109,20 +109,22 @@ uint8_t gc_poll(uint8_t *controller_buffer) {
             "lsr %[n] \n\t" // Move on to the next bit in the series
             "brne low \n\t"     // Check if we've filled a byte
             "byte: \n\t"
-                "sbi %[port_debug], %[bit_debug] \n\t"
+                //"sbi %[port_debug], %[bit_debug] \n\t"
                 "st %a[buff]+, __tmp_reg__ \n\t"        // Store the bit in the buffer
                 "ldi %[n], 0b10000000 \n\t"             // Reinitialize the current bit
-                "mov __tmp_reg__, __zero_reg__ \n\t"
-                "cbi %[port_debug], %[bit_debug] \n\t"
-                //"rjmp end \n\t"
+                "mov __tmp_reg__, __zero_reg__ \n\t"    // Zero out the byte buffer
+                "inc %[k] \n\t"
+                //"cpi %[k], %[buffer_size] \n\t"
+                "breq end \n\t"
             "low: \n\t"   // Wait for the signal to go low
                 "sbis %[pin_gc], %[bit_gc] \n\t"  // Skip out if the signal goes low(bit is still being transmitted)
                 "brne low \n\t"            // Loop back to 0
             "rjmp loop \n\t"
-            "end: ldi %[i], 0b10101010 \n\t"
+            "end: sub %[buff], %[k] \n\t"
             :
             [i]                 "=a" (i),
             [n]                 "=a" (n),
+            [k]                 "=r" (k),
             [buff]              "+e" (controller_buffer)
             :
             [port_debug]        "I" (_SFR_IO_ADDR(PORT_DEBUG)),
@@ -130,12 +132,11 @@ uint8_t gc_poll(uint8_t *controller_buffer) {
             [port_gc]           "I" (_SFR_IO_ADDR(PORT_GC)),
             [pin_gc]            "I" (_SFR_IO_ADDR(PIN_GC)),
             [bit_gc]            "I" (P_GC),
-            [threshold]         "M" (7)
+            [threshold]         "M" (7),
+            [buffer_size]       "M" (7)
         );
 
-    //CLEAR_BIT(PORT_DEBUG, P_DEBUG);
-
-    spi_transmit(controller_buffer[-8]);
+    //spi_transmit(controller_buffer[7]);
 
     return 1;
 }

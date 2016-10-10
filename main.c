@@ -3,6 +3,7 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
+#include "xbox.h"
 #include "pins.h"
 #include "controller.h"
 #include "spi.h"
@@ -64,6 +65,8 @@ int main(void)
         }
 
 		gc_poll(controller_buffer);
+
+        xbox_send(controller_buffer);
 
         /*
         analog++;
