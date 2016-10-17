@@ -33,8 +33,8 @@ int main(void)
     //sei();
     cli();
 
-    // Set P_DEBUG as debug output line
-    SET_BIT(DDR_DEBUG, P_DEBUG);
+    // Set BIT_DEBUG as debug output line
+    SET_BIT(DDR_DEBUG, BIT_DEBUG);
 
     // Set PORTC high
     PORTC = 0xFF;
@@ -101,9 +101,9 @@ ISR(INT0_vect) {
     // If so, this is a data transfer. If not, it was just a sync pulse
     if(GET_BIT(EIFR, INTF0)) {
         // Toggle the debug line
-        SET_BIT(PORT_DEBUG, P_DEBUG);
+        SET_BIT(PORT_DEBUG, BIT_DEBUG);
         _delay_us(20);
-        CLEAR_BIT(PORT_DEBUG, P_DEBUG);
+        CLEAR_BIT(PORT_DEBUG, BIT_DEBUG);
         count++;
         if((count >= LEFT_WAIT) & (state == Idle_left)) {
             state = Move_left;

@@ -21,7 +21,7 @@
             :                                                   \
             [c]                 "M" (count),                    \
             [port]              "I" (_SFR_IO_ADDR(PORT_GC)),    \
-            [bit]               "I" (P_GC),                     \
+            [bit]               "I" (BIT_GC),                   \
             [delay_zero_long]   "M" (CYCLES_LONG / 3),          \
             [delay_zero_short]  "M" (CYCLES_SHORT / 3 - 1)      \
         )
@@ -46,7 +46,7 @@
             :                                                   \
             [c]                 "M" (count),                    \
             [port]              "I" (_SFR_IO_ADDR(PORT_GC)),    \
-            [bit]               "I" (P_GC),                     \
+            [bit]               "I" (BIT_GC),                   \
             [delay_one_long]    "M" (CYCLES_LONG / 3),          \
             [delay_one_short]   "M" (CYCLES_SHORT / 3 - 1)      \
         )
@@ -56,8 +56,8 @@ uint8_t gc_poll(uint8_t *controller_buffer) {
         controller_buffer[i] = 0b10101010;
     }
 
-    SET_BIT(PORT_GC, P_GC);
-    SET_BIT(DDR_GC, P_GC);          // Set PIN_GC as output
+    SET_BIT(PORT_GC, BIT_GC);
+    SET_BIT(DDR_GC, BIT_GC);          // Set PIN_GC as output
 
     // Temporary variables for assembly functions
     uint8_t i, n, k;
@@ -73,8 +73,8 @@ uint8_t gc_poll(uint8_t *controller_buffer) {
     send_zeroes(1, i, n);
     send_ones(1, i, n);
 
-    SET_BIT(PORT_GC, P_GC);
-    CLEAR_BIT(DDR_GC, P_GC);        // Set PIN_GC as input
+    SET_BIT(PORT_GC, BIT_GC);
+    CLEAR_BIT(DDR_GC, BIT_GC);        // Set PIN_GC as input
 
     // '0' bits usually take 9-10 loops
     // '1' bits usually take 3-4 loops
@@ -128,10 +128,10 @@ uint8_t gc_poll(uint8_t *controller_buffer) {
             [buff]              "+e" (controller_buffer)
             :
             [port_debug]        "I" (_SFR_IO_ADDR(PORT_DEBUG)),
-            [bit_debug]         "I" (P_DEBUG),
+            [bit_debug]         "I" (BIT_DEBUG),
             [port_gc]           "I" (_SFR_IO_ADDR(PORT_GC)),
             [pin_gc]            "I" (_SFR_IO_ADDR(PIN_GC)),
-            [bit_gc]            "I" (P_GC),
+            [bit_gc]            "I" (BIT_GC),
             [threshold]         "M" (7),
             [buffer_size]       "M" (8)
         );

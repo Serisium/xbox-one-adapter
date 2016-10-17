@@ -11,11 +11,11 @@
 #define PORT_DEBUG  PORTD
 #define PIN_DEBUG   PIND
 #define DDR_DEBUG   DDRD
-#define P_DEBUG     PD3
+#define BIT_DEBUG   PD3
 
 #define PORT_GC     PORTD
 #define PIN_GC      PIND
 #define DDR_GC      DDRD
-#define P_GC        PD4
+#define BIT_GC      PD4
 
 #endif
