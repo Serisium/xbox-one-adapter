@@ -66,7 +66,7 @@ int main(void)
 
 		gc_poll(controller_buffer);
 
-        xbox_send(controller_buffer);
+        xbox_send(controller);
 
         /*
         analog++;

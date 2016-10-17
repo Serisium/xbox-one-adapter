@@ -3,7 +3,8 @@
 
 #include <stdint.h>
 #include "spi.h"
+#include "controller.h"
 
-void xbox_send(uint8_t *controller_buffer);
+void xbox_send(Controller *c);
 
 #endif
