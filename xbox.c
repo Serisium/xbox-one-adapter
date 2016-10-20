@@ -13,7 +13,7 @@ void xbox_send(Controller *c) {
     } else {
         SET_BIT(PORTC, PC0);
     }
-    if(CONTROLLER_B(*c)) {
+    if(CONTROLLER_X(*c)) {
         CLEAR_BIT(PORTC, PC1);
     } else {
         SET_BIT(PORTC, PC1);
@@ -23,7 +23,7 @@ void xbox_send(Controller *c) {
     } else {
         SET_BIT(PORTC, PC2);
     }
-    if(CONTROLLER_X(*c)) {
+    if(CONTROLLER_B(*c)) {
         CLEAR_BIT(PORTC, PC3);
     } else {
         SET_BIT(PORTC, PC3);
