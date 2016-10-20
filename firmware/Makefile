@@ -30,7 +30,7 @@ flash:	$(TARGET)
 	avrdude $(AVRFLAGS) -U flash:w:$(TARGET)
 
 clean:
-	rm -f *.0 *.hex *.o
+	rm -f *.0 *.hex *.o *.elf
 
 fuse:
 	avrdude $(AVRFLAGS) -U efuse:w:$(EFUSE):m -U hfuse:w:$(HFUSE):m -U lfuse:w:$(LFUSE):m
