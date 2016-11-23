@@ -12,4 +12,5 @@ void analog_write(uint8_t channel, uint8_t data) {
     spi_transmit(0x0f & channel);
     spi_transmit(data);
     SET_BIT(PORTB, PB2);
+    _delay_us(10);
 }

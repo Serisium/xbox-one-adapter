@@ -8,26 +8,13 @@
 #include "controller.h"
 #include "spi.h"
 
-#define LEFT_WAIT   4
-#define RIGHT_WAIT  4
-
-typedef enum {
-    Idle_left,
-    Idle_right,
-    Move_left,
-    Move_right
-} State;
-
-int state = 0;
-int count = 0;
-
 int main(void)
 {
-    wdt_enable(WDTO_1S);    // enable 1s watchdog timer
+    //wdt_enable(WDTO_1S);    // enable 1s watchdog timer
 
     // Enable external interrupt on INT0(PD2) rising edge
-    EICRA = (1 << ISC01) | (1 << ISC00);    // INT0 Rising edge
-    EIMSK = (1 << INT0);                    // Enable INT0
+    //EICRA = (1 << ISC01) | (1 << ISC00);    // INT0 Rising edge
+    //EIMSK = (1 << INT0);                    // Enable INT0
 
     // Enable interrupts
     //sei();
@@ -36,23 +23,25 @@ int main(void)
     // Set BIT_DEBUG as debug output line
     SET_BIT(DDR_DEBUG, BIT_DEBUG);
 
-    // Set PORTC high
+    // Set pins high
+    PORTB = 0xFF;
     PORTC = 0xFF;
+    PORTD = 0xFF;
 
-    // Set PORTC as output
-    DDRC = 0xFF;
+    // Set XBox interface pins as output
+    DDRB = (1<<PB0) || (1<<PB1);
+    DDRC = (1<<PC0) || (1<<PC1) || (1<<PC2) || (1<<PC3) || (1<<PC4) || (1<<PC5);
+    DDRD = (1<<PD0) || (1<<PD1) || (1<<PD2) || (1<<PD3) || (1<<PD4) || (1<<PD6) || (1<<PD7);
 
     // Set up SPI for analog outputs, ch 19.5 in datasheet
-    // Enable latch, MOSI, and SCK as outputs
-    SET_BIT(DDRB, PB2);
-    SET_BIT(DDRB, PB3);
-    SET_BIT(DDRB, PB5);
+    // Enable SS, MOSI, and SCK as outputs
+    SET_BIT(DDRB, PB2); // SS
+    SET_BIT(DDRB, PB3); // MOSI
+    SET_BIT(DDRB, PB5); // SCK
     // Set latch as idle-high
     SET_BIT(PORTB, PB2);
     // Enable SPI in Master mode, with a rate of F_CPU/64
     SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR1);
-
-    uint8_t analog = 0;
 
     uint8_t controller_buffer[8] = {0};
     Controller *controller = (Controller*)controller_buffer;
@@ -65,28 +54,14 @@ int main(void)
         }
 
 		gc_poll(controller_buffer);
-
         xbox_send(controller);
 
-        /*
-        analog++;
-        analog_write(8, analog);
-
-        if(state == Move_left) {
-            DDRC = 0b00000001;
-            PORTC = 0b11111110;
-            state = 1;
-        } else if(state == Move_right) {
-            DDRC = 0b00000010;
-            PORTC = 0b11111101;
-            state = 0;
-        }
-        */
-        _delay_us(500);
+        _delay_us(4000);
     }
 }
 
 // Watch the USB D- line for activity, so we can stay synchronized
+/*
 ISR(INT0_vect) {
     // Wait out a sync pulse's duration
     _delay_us(15);
@@ -104,13 +79,6 @@ ISR(INT0_vect) {
         SET_BIT(PORT_DEBUG, BIT_DEBUG);
         _delay_us(20);
         CLEAR_BIT(PORT_DEBUG, BIT_DEBUG);
-        count++;
-        if((count >= LEFT_WAIT) & (state == Idle_left)) {
-            state = Move_left;
-            count = 0;
-        } else if((count >= RIGHT_WAIT) & (state == Idle_right)) {
-            state = Move_right;
-            count = 0;
-        }
     }
 }
+*/

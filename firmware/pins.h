@@ -16,6 +16,6 @@
 #define PORT_GC     PORTD
 #define PIN_GC      PIND
 #define DDR_GC      DDRD
-#define BIT_GC      PD4
+#define BIT_GC      PD5
 
 #endif

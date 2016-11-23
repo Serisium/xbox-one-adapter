@@ -53,7 +53,7 @@
 
 uint8_t gc_poll(uint8_t *controller_buffer) {
     for(uint8_t i = 0; i < 8; i++) {
-        controller_buffer[i] = 0b10101010;
+        controller_buffer[i] = 0b00000000;
     }
 
     SET_BIT(PORT_GC, BIT_GC);
@@ -140,3 +140,10 @@ uint8_t gc_poll(uint8_t *controller_buffer) {
 
     return 1;
 }
+
+/*
+void apply_calibration(Controller *controller, Controller_cal *calibration) {
+    // Update calibration constants based on the given controller state
+    return;
+}
+*/

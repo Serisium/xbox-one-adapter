@@ -1,12 +1,12 @@
 PROJECTNAME = xbone-adapter
-DEVICE = atmega328
+DEVICE = atmega328p
 PROGRAMMER = usbtiny
 F_CPU = 12000000
 CC = avr-gcc
 AVROBJCOPY = avr-objcopy
 
 # 12MHz internal clock
-LFUSE = 0xBF
+LFUSE = 0xFF
 HFUSE = 0xCF
 EFUSE = 0xFF
 

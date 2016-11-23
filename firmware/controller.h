@@ -70,6 +70,17 @@ typedef enum Button_t {
 #define CYCLES_LONG         3 * F_CPU / 1000000
 #define CYCLES_SHORT        1 * F_CPU / 1000000
 
+/*
+typedef struct Analog_cal_t {
+    uint8_t low, high;
+} Analog_cal;
+
+typedef struct Controller_cal_t {
+    Analog_cal joy_x, joy_y, c_x, c_y, analog_l, analog_r;
+} Controller_cal;
+*/
+
 uint8_t gc_poll(uint8_t *controller_buffer);
+//void apply_calibration(Controller *controller, Controller_cal *calibration);
 
 #endif
