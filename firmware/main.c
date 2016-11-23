@@ -45,6 +45,8 @@ int main(void)
 
     uint8_t controller_buffer[8] = {0};
     Controller *controller = (Controller*)controller_buffer;
+    Cal calibration_constants[6] = {0};
+    init_calibration(calibration_constants);
 
     while(1) {
         wdt_reset();
@@ -54,6 +56,7 @@ int main(void)
         }
 
 		gc_poll(controller_buffer);
+        apply_calibration(controller, calibration_constants);
         xbox_send(controller);
 
         _delay_us(4000);

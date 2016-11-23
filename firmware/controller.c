@@ -141,9 +141,89 @@ uint8_t gc_poll(uint8_t *controller_buffer) {
     return 1;
 }
 
-/*
-void apply_calibration(Controller *controller, Controller_cal *calibration) {
+void init_calibration(Cal *calibration) {
+    for(uint8_t i = 0; i < 6; i++) {
+        calibration[i].low = 0x18;
+        calibration[i].high = 0xDE;
+    }
+}
+
+void apply_calibration(Controller *controller, Cal *calibration) {
     // Update calibration constants based on the given controller state
+    if(controller->joy_x < calibration[0].low) {
+        calibration[0].low = controller->joy_x;
+    }
+    if(controller->joy_x > calibration[0].high) {
+        calibration[0].high = controller->joy_x;
+    }
+    if(controller->joy_x < calibration[1].low) {
+        calibration[1].low = controller->joy_y;
+    }
+    if(controller->joy_y > calibration[1].high) {
+        calibration[1].high = controller->joy_y;
+    }
+    if(controller->c_x < calibration[2].low) {
+        calibration[2].low = controller->c_x;
+    }
+    if(controller->c_x > calibration[2].high) {
+        calibration[2].high = controller->c_x;
+    }
+    if(controller->c_y < calibration[3].low) {
+        calibration[3].low = controller->c_y;
+    }
+    if(controller->c_y > calibration[3].high) {
+        calibration[3].high = controller->c_y;
+    }
+    if(controller->analog_l < calibration[4].low) {
+        calibration[4].low = controller->analog_l;
+    }
+    if(controller->analog_l > calibration[4].high) {
+        calibration[4].high = controller->analog_l;
+    }
+    if(controller->analog_r < calibration[5].low) {
+        calibration[5].low = controller->analog_r;
+    }
+    if(controller->analog_r > calibration[5].high) {
+        calibration[5].high = controller->analog_r;
+    }
+
+    uint16_t temp;
+
+    temp = controller->joy_x;
+    temp -= calibration[0].low;
+    temp *= 0xFF;
+    temp /= calibration[0].high - calibration[0].low;
+    controller->joy_x = temp;
+
+    temp = controller->joy_y;
+    temp -= calibration[1].low;
+    temp *= 0xFF;
+    temp /= calibration[1].high - calibration[1].low;
+    controller->joy_y = temp;
+
+    temp = controller->c_x;
+    temp -= calibration[2].low;
+    temp *= 0xFF;
+    temp /= calibration[2].high - calibration[2].low;
+    controller->c_x = temp;
+
+    temp = controller->c_y;
+    temp -= calibration[3].low;
+    temp *= 0xFF;
+    temp /= calibration[3].high - calibration[3].low;
+    controller->c_y = temp;
+
+    temp = controller->analog_l;
+    temp -= calibration[4].low;
+    temp *= 0xFF;
+    temp /= calibration[4].high - calibration[4].low;
+    controller->analog_l = temp;
+
+    temp = controller->analog_r;
+    temp -= calibration[5].low;
+    temp *= 0xFF;
+    temp /= calibration[5].high - calibration[5].low;
+    controller->analog_r = temp;
+
     return;
 }
-*/
