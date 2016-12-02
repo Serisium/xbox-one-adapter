@@ -48,6 +48,9 @@ int main(void)
     Cal calibration_constants[6] = {0};
     init_calibration(calibration_constants);
 
+    uint8_t idle_buffer[8] = {0x00, 0x80, 0x80, 0x80, 0x80, 0x80, 0xFF, 0xFF};
+    Controller *idle = (Controller*)idle_buffer;
+
     while(1) {
         wdt_reset();
 
@@ -56,8 +59,17 @@ int main(void)
         }
 
 		gc_poll(controller_buffer);
-        apply_calibration(controller, calibration_constants);
-        xbox_send(controller);
+
+        // The 1st bit of the 2nd byte is gauranteed to be a "1", so we can
+        // use it to detect a connected controller
+        if(controller_buffer[1] != 0) {
+            apply_calibration(controller, calibration_constants);
+            xbox_send(controller);
+        } else {
+            init_calibration(calibration_constants);
+            xbox_send(idle);
+        }
+
 
         _delay_us(4000);
     }

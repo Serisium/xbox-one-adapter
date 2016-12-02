@@ -142,9 +142,13 @@ uint8_t gc_poll(uint8_t *controller_buffer) {
 }
 
 void init_calibration(Cal *calibration) {
-    for(uint8_t i = 0; i < 6; i++) {
+    for(uint8_t i = 0; i < 4; i++) {
         calibration[i].low = 0x18;
         calibration[i].high = 0xDE;
+    }
+    for(uint8_t i = 4; i < 6; i++) {
+        calibration[i].low = 0x26;
+        calibration[i].high = 0xEE;
     }
 }
 
