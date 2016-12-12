@@ -7,7 +7,7 @@ $fn=80;
 e = 0.01;
 
 // Wall thickness
-wall = 1.6;
+wall = 2.4;
 
 // Self-mating clearance, on each side
 clearance = .15;
@@ -30,11 +30,19 @@ usb_width = 5.55;       // Measured at 5.15mm
 
 // M2.5 pan head, 5mm tall
 // 2.5mm diameter, with .2mm clearance(.1mm radius)
-module screw_hole() {
+module screw_container() {
     difference() {
-        cylinder(h=6, d=8);
-        translate([0,0,1])
-            cylinder(h=6, d=2.5+.1);
+        cylinder(h=7, d=8);
+        translate([0,0,.5])
+            screw_hole();
+    }
+}
+module screw_hole() {
+    union() {
+        translate([0,0,-e])
+            cylinder(h=100, d=3.6);
+        translate([0,0,3])
+            cylinder(d1=3.6, d2=4.04, h=3.51);
     }
 }
 
@@ -58,7 +66,7 @@ module zip_tie() {
 }
 
 //zip_tie();
-//screw_hole();
+//screw_container();
 //screw_point();
 
 union() {
@@ -68,7 +76,7 @@ union() {
         cube([width, length, wall]);
 
         // Screw points
-        translate([width - wall - 3, 2*wall + gcn_thickness + 3, -e])
+        translate([width - wall - 3, wall + gcn_thickness + 3, -e])
             screw_point();
         translate([width - wall - 3, length - wall - 3, -e])
             screw_point();
@@ -76,49 +84,49 @@ union() {
 
     // Screw collumns
     difference() {
-        translate([wall, 2*wall + gcn_thickness, 0])
+        translate([wall, wall + gcn_thickness, 0])
             cube([6, 6, height - wall - clearance]);
-        translate([wall + 3, 2*wall + gcn_thickness + 3, height - wall - 6])
-            cylinder(h=6, d=2.5+.1);
+        translate([wall + 3, wall + gcn_thickness + 3, height - wall - 6.5])
+            screw_hole();
     }
     difference() {
         translate([wall, length - wall - 6, 0])
             cube([6, 6, height - wall - clearance]);
-        translate([wall + 3, length - wall - 3, height - wall - 6])
-            cylinder(h=6, d=2.5+.1);
+        translate([wall + 3, length - wall - 3, height - wall - 6.5])
+            screw_hole();
     }
 
     // Adapter board mount points
     translate([width/2, 30, wall - 1]) {
         translate([-adapter_width/2, 0, 0])
-            screw_hole();
+            screw_container();
         translate([adapter_width/2, 0, 0])
-            screw_hole();
+            screw_container();
         translate([-adapter_width/2, 0 + adapter_length, 0])
-            screw_hole();
+            screw_container();
         translate([adapter_width/2, 0 + adapter_length, 0])
-            screw_hole();
+            screw_container();
     }
 
     // Xbox controller zip tie points
-    translate([width/2 - 45, 50 + adapter_length, wall])
+    translate([width/2 - 45 - 8, 45 + adapter_length, wall])
         zip_tie();
-    translate([width/2 - 30, 105 + adapter_length, wall])
+    translate([width/2 - 30 - 8, 100 + adapter_length, wall])
         zip_tie();
-    translate([width/2 + 45, 50 + adapter_length, wall])
+    translate([width/2 + 45 - 8, 45 + adapter_length, wall])
         zip_tie();
-    translate([width/2 + 30, 105 + adapter_length, wall])
+    translate([width/2 + 30 - 8, 100 + adapter_length, wall])
         zip_tie();
 
     // Front wall
     difference() {
         // Full front
-        cube([width - wall - clearance, wall*2 + gcn_thickness, height/2 - clearance]);
+        cube([width - wall - clearance, wall + gcn_thickness, height/2 - clearance]);
 
         // Subtract out inner hollow spots for GCN connector
-        translate([width/3 - gcn_diameter/2, wall, height/2 - gcn_diameter/2])
+        translate([width/3 - gcn_diameter/2, wall/2, height/2 - gcn_diameter/2])
             cube([gcn_diameter, gcn_thickness, height/2+e]);
-        translate([2*width/3 - gcn_diameter/2, wall, height/2 - gcn_diameter/2])
+        translate([2*width/3 - gcn_diameter/2, wall/2, height/2 - gcn_diameter/2])
             cube([gcn_diameter, gcn_thickness, height/2+e]);
 
         // Subtract out cylinders for GCN connector
