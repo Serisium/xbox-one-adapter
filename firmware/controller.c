@@ -22,8 +22,8 @@
             [c]                 "M" (count),                    \
             [port]              "I" (_SFR_IO_ADDR(PORT_GC)),    \
             [bit]               "I" (BIT_GC),                   \
-            [delay_zero_long]   "M" (CYCLES_LONG / 3),          \
-            [delay_zero_short]  "M" (CYCLES_SHORT / 3 - 1)      \
+            [delay_zero_long]   "M" (CYCLES_LONG / 3 - 0),      \
+            [delay_zero_short]  "M" (CYCLES_SHORT / 3 - 2)      \
         )
 
 #define send_ones(count, i, n)                                  \
@@ -47,8 +47,8 @@
             [c]                 "M" (count),                    \
             [port]              "I" (_SFR_IO_ADDR(PORT_GC)),    \
             [bit]               "I" (BIT_GC),                   \
-            [delay_one_long]    "M" (CYCLES_LONG / 3),          \
-            [delay_one_short]   "M" (CYCLES_SHORT / 3 - 1)      \
+            [delay_one_long]    "M" (CYCLES_LONG / 3 - 2),      \
+            [delay_one_short]   "M" (CYCLES_SHORT / 3 - 0)      \
         )
 
 uint8_t gc_poll(uint8_t *controller_buffer) {
@@ -68,9 +68,9 @@ uint8_t gc_poll(uint8_t *controller_buffer) {
     send_ones(1, i, n);
     send_zeroes(12, i, n);
     send_ones(2, i, n);
-    send_zeroes(6, i, n);
-    send_ones(1, i, n);
-    send_zeroes(1, i, n);
+    send_zeroes(8, i, n);
+    //send_ones(1, i, n);
+    //send_zeroes(1, i, n);
     send_ones(1, i, n);
 
     SET_BIT(PORT_GC, BIT_GC);
@@ -152,6 +152,14 @@ void init_calibration(Cal *calibration) {
     }
 }
 
+uint8_t scale(uint8_t i, uint8_t min, uint8_t max) {
+    return (((uint16_t) 255)*(i-min))/(max-min);
+}
+
+uint8_t scale_shoulder(uint8_t i, uint8_t min, uint8_t max) {
+    return (((uint16_t) 200)*(i-min))/(max-min);
+}
+
 void apply_calibration(Controller *controller, Cal *calibration) {
     // Update calibration constants based on the given controller state
     if(controller->joy_x < calibration[0].low) {
@@ -160,7 +168,7 @@ void apply_calibration(Controller *controller, Cal *calibration) {
     if(controller->joy_x > calibration[0].high) {
         calibration[0].high = controller->joy_x;
     }
-    if(controller->joy_x < calibration[1].low) {
+    if(controller->joy_y < calibration[1].low) {
         calibration[1].low = controller->joy_y;
     }
     if(controller->joy_y > calibration[1].high) {
@@ -191,43 +199,12 @@ void apply_calibration(Controller *controller, Cal *calibration) {
         calibration[5].high = controller->analog_r;
     }
 
-    uint16_t temp;
-
-    temp = controller->joy_x;
-    temp -= calibration[0].low;
-    temp *= 0xFF;
-    temp /= calibration[0].high - calibration[0].low;
-    controller->joy_x = temp;
-
-    temp = controller->joy_y;
-    temp -= calibration[1].low;
-    temp *= 0xFF;
-    temp /= calibration[1].high - calibration[1].low;
-    controller->joy_y = temp;
-
-    temp = controller->c_x;
-    temp -= calibration[2].low;
-    temp *= 0xFF;
-    temp /= calibration[2].high - calibration[2].low;
-    controller->c_x = temp;
-
-    temp = controller->c_y;
-    temp -= calibration[3].low;
-    temp *= 0xFF;
-    temp /= calibration[3].high - calibration[3].low;
-    controller->c_y = temp;
-
-    temp = controller->analog_l;
-    temp -= calibration[4].low;
-    temp *= 0xFF;
-    temp /= calibration[4].high - calibration[4].low;
-    controller->analog_l = temp;
-
-    temp = controller->analog_r;
-    temp -= calibration[5].low;
-    temp *= 0xFF;
-    temp /= calibration[5].high - calibration[5].low;
-    controller->analog_r = temp;
+    controller->joy_x = scale(controller->joy_x, calibration[0].low, calibration[0].high);
+    controller->joy_y = scale(controller->joy_y, calibration[1].low, calibration[1].high);
+    controller->c_x = scale(controller->c_x, calibration[2].low, calibration[2].high);
+    controller->c_y = scale(controller->c_y, calibration[3].low, calibration[3].high);
+    controller->analog_l = scale_shoulder(controller->analog_l, calibration[4].low, calibration[4].high);
+    controller->analog_r = scale_shoulder(controller->analog_r, calibration[5].low, calibration[5].high);
 
     return;
 }

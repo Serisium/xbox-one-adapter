@@ -10,7 +10,7 @@
 
 int main(void)
 {
-    //wdt_enable(WDTO_1S);    // enable 1s watchdog timer
+    wdt_enable(WDTO_1S);    // enable 1s watchdog timer
 
     // Enable external interrupt on INT0(PD2) rising edge
     //EICRA = (1 << ISC01) | (1 << ISC00);    // INT0 Rising edge
@@ -51,6 +51,10 @@ int main(void)
     uint8_t idle_buffer[8] = {0x00, 0x80, 0x80, 0x80, 0x80, 0x80, 0xFF, 0xFF};
     Controller *idle = (Controller*)idle_buffer;
 
+    uint8_t is_connected = 0;
+    uint8_t disconnected_count = 0;
+    uint8_t connected_count = 0;
+
     while(1) {
         wdt_reset();
 
@@ -63,15 +67,32 @@ int main(void)
         // The 1st bit of the 2nd byte is gauranteed to be a "1", so we can
         // use it to detect a connected controller
         if(controller_buffer[1] != 0) {
-            apply_calibration(controller, calibration_constants);
-            xbox_send(controller);
+            is_connected = 1;
+            disconnected_count = 0;
+            if(connected_count >= 10) {
+                apply_calibration(controller, calibration_constants);
+                xbox_send(controller);
+            } else {
+                connected_count++;
+                xbox_send(idle);
+            }
         } else {
-            init_calibration(calibration_constants);
+            // Reset the chip on controller disconnect
+            // See if the controller was previously connected
+            if(is_connected == 1) {
+                // If so, debounce it for 10 pulses(40ms)
+                disconnected_count++;
+                if(disconnected_count > 10) {
+                    // Then, reset by timing out the watchdog timer
+                    wdt_enable(WDTO_15MS);
+                    for(;;){}
+                }
+            }
+            //init_calibration(calibration_constants);
             xbox_send(idle);
         }
 
-
-        _delay_us(4000);
+        _delay_us(3300);
     }
 }
 
