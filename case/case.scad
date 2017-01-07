@@ -19,7 +19,7 @@ height = 40;
 
 // Adapter's screw-hole measurements
 adapter_width = 24.105;
-adapter_length = 37.63;
+adapter_length = 35.63;
 
 // GCN port measurements
 gcn_thickness = 1.80;   // Measured at 1.51mm
@@ -89,13 +89,15 @@ union() {
         translate([wall, wall + gcn_thickness, 0])
             cube([8, 8, height - wall - clearance]);
         translate([wall + 4, wall + gcn_thickness + 4, height - wall - 7.5])
-            screw_hole();
+            scale([.9, .9, 1])
+                screw_hole();
     }
     difference() {
         translate([wall, length - wall - 8, 0])
             cube([8, 8, height - wall - clearance]);
         translate([wall + 4, length - wall - 4, height - wall - 7.5])
-            screw_hole();
+            scale([.9, .9, 1])
+                screw_hole();
     }
 
     // Adapter board mount points

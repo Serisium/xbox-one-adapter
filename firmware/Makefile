@@ -1,6 +1,6 @@
 PROJECTNAME = xbone-adapter
 DEVICE = atmega328p
-PROGRAMMER = usbtiny
+PROGRAMMER = usbasp-clone
 F_CPU = 12000000
 CC = avr-gcc
 AVROBJCOPY = avr-objcopy
@@ -12,7 +12,10 @@ EFUSE = 0xFF
 
 CFLAGS = -Wall -Os -mmcu=$(DEVICE) -DF_CPU=$(F_CPU) -std=gnu99
 OBJFLAGS = -j .text -j .data -O ihex
-AVRFLAGS = -p $(DEVICE) -c $(PROGRAMMER)
+# -F is used ONLY because some of the devices distrubuted are m328p, and some are m328pb
+# These are functionally identical, but have different signatures
+AVRFLAGS = -F -p $(DEVICE) -c $(PROGRAMMER)
+#AVRFLAGS = -p $(DEVICE) -c $(PROGRAMMER)
 
 COBJECTS = $(patsubst %.c, %.o, $(shell find $(SOURCEDIR) -name '*.c'))
 ASMOBJECTS = $(patsubst %.S, %.o, $(shell find $(SOURCEDIR) -name '*.S'))

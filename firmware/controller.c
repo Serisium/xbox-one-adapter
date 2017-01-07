@@ -141,70 +141,44 @@ uint8_t gc_poll(uint8_t *controller_buffer) {
     return 1;
 }
 
-void init_calibration(Cal *calibration) {
-    for(uint8_t i = 0; i < 4; i++) {
-        calibration[i].low = 0x18;
-        calibration[i].high = 0xDE;
+void init_calibration(Controller *controller, Calibration_Constants *calibration) {
+    calibration->joy_x = controller->joy_x;
+    calibration->joy_y = controller->joy_y;
+    calibration->c_x = controller->c_x;
+    calibration->c_y = controller->c_y;
+    calibration->analog_l = controller->analog_l;
+    calibration->analog_r = controller->analog_r;
+}
+
+uint8_t scale_stick(uint8_t center, uint8_t value) {
+    int16_t offset = center - 127;
+    int16_t adjusted_value = value + offset;
+    if(adjusted_value < 0) {
+        return 0;
+    } else if(adjusted_value > 0xFF) {
+        return 0xFF;
+    } else {
+        return adjusted_value;
     }
-    for(uint8_t i = 4; i < 6; i++) {
-        calibration[i].low = 0x26;
-        calibration[i].high = 0xEE;
+}
+
+uint8_t scale_shoulder(uint8_t center, uint8_t value) {
+    //int16_t offset = center - 80;
+    if(value >= center) {
+        return value - center;
+    } else {
+        return 0;
     }
 }
 
-uint8_t scale(uint8_t i, uint8_t min, uint8_t max) {
-    return (((uint16_t) 255)*(i-min))/(max-min);
-}
-
-uint8_t scale_shoulder(uint8_t i, uint8_t min, uint8_t max) {
-    return (((uint16_t) 200)*(i-min))/(max-min);
-}
-
-void apply_calibration(Controller *controller, Cal *calibration) {
+void apply_calibration(Controller *controller, Calibration_Constants *calibration) {
     // Update calibration constants based on the given controller state
-    if(controller->joy_x < calibration[0].low) {
-        calibration[0].low = controller->joy_x;
-    }
-    if(controller->joy_x > calibration[0].high) {
-        calibration[0].high = controller->joy_x;
-    }
-    if(controller->joy_y < calibration[1].low) {
-        calibration[1].low = controller->joy_y;
-    }
-    if(controller->joy_y > calibration[1].high) {
-        calibration[1].high = controller->joy_y;
-    }
-    if(controller->c_x < calibration[2].low) {
-        calibration[2].low = controller->c_x;
-    }
-    if(controller->c_x > calibration[2].high) {
-        calibration[2].high = controller->c_x;
-    }
-    if(controller->c_y < calibration[3].low) {
-        calibration[3].low = controller->c_y;
-    }
-    if(controller->c_y > calibration[3].high) {
-        calibration[3].high = controller->c_y;
-    }
-    if(controller->analog_l < calibration[4].low) {
-        calibration[4].low = controller->analog_l;
-    }
-    if(controller->analog_l > calibration[4].high) {
-        calibration[4].high = controller->analog_l;
-    }
-    if(controller->analog_r < calibration[5].low) {
-        calibration[5].low = controller->analog_r;
-    }
-    if(controller->analog_r > calibration[5].high) {
-        calibration[5].high = controller->analog_r;
-    }
-
-    controller->joy_x = scale(controller->joy_x, calibration[0].low, calibration[0].high);
-    controller->joy_y = scale(controller->joy_y, calibration[1].low, calibration[1].high);
-    controller->c_x = scale(controller->c_x, calibration[2].low, calibration[2].high);
-    controller->c_y = scale(controller->c_y, calibration[3].low, calibration[3].high);
-    controller->analog_l = scale_shoulder(controller->analog_l, calibration[4].low, calibration[4].high);
-    controller->analog_r = scale_shoulder(controller->analog_r, calibration[5].low, calibration[5].high);
+    controller->joy_x = scale_stick(controller->joy_x, calibration->joy_x);
+    controller->joy_y = scale_stick(controller->joy_y, calibration->joy_y);
+    controller->c_x = scale_stick(controller->c_x, calibration->c_x);
+    controller->c_y = scale_stick(controller->c_y, calibration->c_y);
+    //controller->analog_l = scale_shoulder(controller->analog_l, calibration->analog_l);
+    //controller->analog_r = scale_shoulder(controller->analog_r, calibration->analog_r);
 
     return;
 }

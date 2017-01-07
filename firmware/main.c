@@ -45,11 +45,13 @@ int main(void)
 
     uint8_t controller_buffer[8] = {0};
     Controller *controller = (Controller*)controller_buffer;
-    Cal calibration_constants[6] = {0};
-    init_calibration(calibration_constants);
+    uint8_t cal_buffer[8] = {0};
+    Calibration_Constants *calibration_constants = (Calibration_Constants*)cal_buffer;
 
     uint8_t idle_buffer[8] = {0x00, 0x80, 0x80, 0x80, 0x80, 0x80, 0xFF, 0xFF};
     Controller *idle = (Controller*)idle_buffer;
+
+    //init_calibration(idle, calibration_constants);
 
     uint8_t is_connected = 0;
     uint8_t disconnected_count = 0;
@@ -67,17 +69,25 @@ int main(void)
         // The 1st bit of the 2nd byte is gauranteed to be a "1", so we can
         // use it to detect a connected controller
         if(controller_buffer[1] != 0) {
-            is_connected = 1;
+            // Reset the disconnected_count debounce buffer
             disconnected_count = 0;
-            if(connected_count >= 10) {
+
+            // Branch if we've been connected, or if this is a new connection
+            if(is_connected) {
                 apply_calibration(controller, calibration_constants);
                 xbox_send(controller);
             } else {
-                connected_count++;
-                xbox_send(idle);
+                if(connected_count >= 10) {
+                    is_connected = 1;
+                    init_calibration(controller, calibration_constants);
+                    xbox_send(controller);
+                } else {
+                    connected_count++;
+                    xbox_send(idle);
+                }
             }
-        } else {
-            // Reset the chip on controller disconnect
+        } else {    // Otherwise, no controller is connected
+            connected_count = 0;
             // See if the controller was previously connected
             if(is_connected == 1) {
                 // If so, debounce it for 10 pulses(40ms)
@@ -88,7 +98,6 @@ int main(void)
                     for(;;){}
                 }
             }
-            //init_calibration(calibration_constants);
             xbox_send(idle);
         }
 

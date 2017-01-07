@@ -373,7 +373,7 @@ UsedLibrary="/home/garrett/.eagle/lbr/element14/Molex_Library/Molex_By_element14
 
 [Win_1]
 Type="Control Panel"
-Loc="1336 12 2543 1423"
+Loc="12 12 2543 1423"
 State=2
 Number=0
 

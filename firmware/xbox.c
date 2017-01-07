@@ -4,11 +4,11 @@ void xbox_send(Controller *c) {
     // Analog values
     analog_write(ANALOG_1, c->joy_x);
     analog_write(ANALOG_2, -c->joy_y);
-    analog_write(ANALOG_3, c->analog_l);
+    analog_write(ANALOG_3, c->analog_l - 15);
     //analog_write(ANALOG_3, 0);
     analog_write(ANALOG_4, c->c_x);
     analog_write(ANALOG_5, -c->c_y);
-    analog_write(ANALOG_6, c->analog_r);
+    analog_write(ANALOG_6, c->analog_r - 15);
     //analog_write(ANALOG_6, 0);
 
     // A->A
@@ -44,13 +44,22 @@ void xbox_send(Controller *c) {
         SET_BIT(PORTC, PC5);
     }
 
-    // Z->R
-    if(CONTROLLER_Z(*c)) {
+    // (Z or R)->R
+    if(CONTROLLER_Z(*c) || CONTROLLER_R(*c)) {
         CLEAR_BIT(PORTC, PC3);
         SET_BIT(DDRC, PC3);
     } else {
         CLEAR_BIT(DDRC, PC3);
         SET_BIT(PORTC, PC3);
+    }
+
+    // L->L (digital)
+    if(CONTROLLER_L(*c)) {
+        CLEAR_BIT(PORTC, PC4);
+        SET_BIT(DDRC, PC4);
+    } else {
+        CLEAR_BIT(DDRC, PC4);
+        SET_BIT(PORTC, PC4);
     }
 
     // D-Up->D-Up(Taunt)
